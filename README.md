@@ -11,6 +11,8 @@
 
 A machine learning solution built for the **BTK Akademi Datathon 2025** competition hosted on Kaggle. The goal is to predict `session_value` — a continuous target representing the monetary or engagement value of a user session — using user behavior data and feature engineering.
 
+**Project Vision:** This datathon submission explores behavioral session data for predictive modeling. The feature engineering techniques developed here — time-based aggregations, user-level behavioral fingerprints, and session-window statistics — are directly transferable to production systems: real-time personalization engines, dynamic pricing models, and product recommendation APIs all rely on the same core pattern of extracting signal from raw user interaction logs.
+
 ---
 
 ## Competition Overview
@@ -96,3 +98,16 @@ This project uses data from the **BTK Akademi Datathon 2025** competition on Kag
 ## Results
 
 The model output is a `submission.csv` file ready for upload to the Kaggle leaderboard. Cross-validation scores and feature importance plots are generated inside the notebook.
+
+---
+
+## Beyond the Datathon
+
+The session value prediction problem is foundational to dozens of real-world applications. Next steps to evolve this into production-grade work:
+
+- [ ] **Real-Time Scoring API** — Wrap the trained LightGBM model in a FastAPI endpoint. Input: raw session event stream. Output: predicted session value in <100ms. This could directly power a recommendation engine or dynamic pricing system.
+- [ ] **Neural Approaches Benchmark** — Compare LightGBM against TabNet, NODE (Neural Oblivious Decision Ensembles), and FT-Transformer on the same CV setup. Does deep learning help on this tabular problem? Measure and document.
+- [ ] **Explainability Layer** — Add SHAP waterfall plots for individual session predictions ("This session's value is high because: weekend=True contributed +12.3, user_history_30d contributed +8.7..."). Add LIME as a second explainer for cross-validation.
+- [ ] **Feature Ablation Study** — Systematically remove feature groups (time features, interaction features, aggregation features) and measure CV RMSE degradation. Produces a clean story about what actually drives session value.
+- [ ] **Data Drift Detection** — Integrate Evidently AI to monitor feature distributions between train and test. Build a drift report that would flag if the model is being applied to out-of-distribution sessions in a production deployment.
+- [ ] **Streaming Feature Pipeline** — Redesign the feature engineering as a streaming pipeline using Kafka + Flink (or simpler: Redis + Python). Simulate real-time feature computation as events arrive during a live session.
