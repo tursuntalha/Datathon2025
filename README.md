@@ -63,13 +63,27 @@ Submission (lgbm_model_submission.csv)
 
 ```
 Datathon2025/
-├── datathon2025.ipynb        # Main notebook: EDA, feature engineering, training
+├── datathon2025.ipynb              # Main notebook: EDA, feature engineering, training
+├── features.py                     # Shared feature engineering module
+├── utils.py                        # Shared utilities (model I/O, paths)
+├── api/
+│   └── main.py                     # (1) Real-Time Scoring API (FastAPI)
+├── benchmarks/
+│   └── neural_benchmark.py         # (2) Neural Approaches Benchmark
+├── explainability/
+│   └── explain.py                  # (3) SHAP + LIME explainability layer
+├── ablation/
+│   └── ablation.py                 # (4) Feature Ablation Study
+├── drift/
+│   └── drift.py                    # (5) Data Drift Detection (Evidently AI)
+├── streaming/
+│   └── pipeline.py                 # (6) Streaming Feature Pipeline (Redis+Python)
 ├── datathon_dataset/
-│   ├── train.csv             # Training data with labels
-│   ├── test.csv              # Test data for submission
-│   └── sample_submission.csv # Submission format template
+│   ├── train.csv                   # Training data with labels
+│   ├── test.csv                    # Test data for submission
+│   └── sample_submission.csv       # Submission format template
 ├── outputs/
-│   └── lgbm_model_submission.csv  # Generated predictions
+│   └── lgbm_model_submission.csv   # Generated predictions
 └── requirements.txt
 ```
 
@@ -105,9 +119,21 @@ The model output is a `submission.csv` file ready for upload to the Kaggle leade
 
 The session value prediction problem is foundational to dozens of real-world applications. Next steps to evolve this into production-grade work:
 
-- [ ] **Real-Time Scoring API** — Wrap the trained LightGBM model in a FastAPI endpoint. Input: raw session event stream. Output: predicted session value in <100ms. This could directly power a recommendation engine or dynamic pricing system.
-- [ ] **Neural Approaches Benchmark** — Compare LightGBM against TabNet, NODE (Neural Oblivious Decision Ensembles), and FT-Transformer on the same CV setup. Does deep learning help on this tabular problem? Measure and document.
-- [ ] **Explainability Layer** — Add SHAP waterfall plots for individual session predictions ("This session's value is high because: weekend=True contributed +12.3, user_history_30d contributed +8.7..."). Add LIME as a second explainer for cross-validation.
-- [ ] **Feature Ablation Study** — Systematically remove feature groups (time features, interaction features, aggregation features) and measure CV RMSE degradation. Produces a clean story about what actually drives session value.
-- [ ] **Data Drift Detection** — Integrate Evidently AI to monitor feature distributions between train and test. Build a drift report that would flag if the model is being applied to out-of-distribution sessions in a production deployment.
-- [ ] **Streaming Feature Pipeline** — Redesign the feature engineering as a streaming pipeline using Kafka + Flink (or simpler: Redis + Python). Simulate real-time feature computation as events arrive during a live session.
+- [x] **Real-Time Scoring API** — Wrap the trained LightGBM model in a FastAPI endpoint. Input: raw session event stream. Output: predicted session value in <100ms. This could directly power a recommendation engine or dynamic pricing system.
+  - `api/main.py`: FastAPI app with `/predict` endpoint, auto-trains model if none exists, returns predictions in ms.
+  - Usage: `uvicorn api.main:app --reload`
+- [x] **Neural Approaches Benchmark** — Compare LightGBM against TabNet, NODE (Neural Oblivious Decision Ensembles), and FT-Transformer on the same CV setup. Does deep learning help on this tabular problem? Measure and document.
+  - `benchmarks/neural_benchmark.py`: Time-based CV loop, TableNet via `pytorch-tabnet`, NODE & FT-Transformer via PyTorch implementations.
+  - Usage: `python -m benchmarks.neural_benchmark`
+- [x] **Explainability Layer** — Add SHAP waterfall plots for individual session predictions ("This session's value is high because: weekend=True contributed +12.3, user_history_30d contributed +8.7..."). Add LIME as a second explainer for cross-validation.
+  - `explainability/explain.py`: SHAP TreeExplainer waterfall + LIME TabularExplainer on sample sessions.
+  - Usage: `python -m explainability.explain`
+- [x] **Feature Ablation Study** — Systematically remove feature groups (time features, interaction features, aggregation features) and measure CV RMSE degradation. Produces a clean story about what actually drives session value.
+  - `ablation/ablation.py`: 14 feature groups defined, each ablated against time-based CV, results ranked by RMSE degradation.
+  - Usage: `python -m ablation.ablation`
+- [x] **Data Drift Detection** — Integrate Evidently AI to monitor feature distributions between train and test. Build a drift report that would flag if the model is being applied to out-of-distribution sessions in a production deployment.
+  - `drift/drift.py`: Evidently AI DataDriftPreset + PSI/K-S fallback if Evidently not installed.
+  - Usage: `python -m drift.drift`
+- [x] **Streaming Feature Pipeline** — Redesign the feature engineering as a streaming pipeline using Kafka + Flink (or simpler: Redis + Python). Simulate real-time feature computation as events arrive during a live session.
+  - `streaming/pipeline.py`: Redis+Python stateful processor, simulates event stream at configurable speed, computes incremental features.
+  - Usage: `python -m streaming.pipeline`
